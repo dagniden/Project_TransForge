@@ -1,0 +1,1 @@
+Оригинальный файл с операциями: [Ссылка на файл](https://docs.google.com/spreadsheets/d/1yXnr282zAMcTkEhIwZFaJlPJvAeZIwvB/edit?gid=1794603603#gid=1794603603)
