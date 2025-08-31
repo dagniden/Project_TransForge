@@ -1,0 +1,75 @@
+import json
+import os
+
+from loguru import logger
+from datetime import datetime
+from src.utils import get_card_statistics, read_excel, read_json, filter_top_transactions
+from src.external_api import get_stock_prices, get_currency_rate
+
+# Конфигурация логгера
+current_dir = os.path.dirname(os.path.abspath(__file__))
+log_dir = os.path.join(current_dir, "..", "logs")
+os.makedirs(log_dir, exist_ok=True)
+log_file = os.path.join(log_dir, "views.log")
+logger.add(sink=log_file, level="DEBUG")
+
+
+def get_main_page(data: list[dict], datetime_str: str) -> str:
+    dt = datetime.strptime(datetime_str, "%Y-%m-%d %H:%M:%S")
+    settings = read_json(os.path.join(current_dir, "..", "user_settings.json"))
+    user_stocks = settings["user_stocks"]
+    user_currencies = settings["user_currencies"]
+    logger.debug(f"Start calculating response for main page with args: {user_stocks=}, {user_currencies=}, {dt=}")
+
+    greeting_str = get_greetings(dt)
+    cards_data = get_card_statistics(data)
+    top_transactions = filter_top_transactions(data)
+
+    stocks_data = []
+    try:
+        stocks_data = get_stock_prices(user_stocks)
+    except:
+        logger.error(f"Error getting stocks data")
+
+
+    currency_rates = []
+    for currency_code in user_currencies:
+        try:
+            currency_rate = get_currency_rate(currency_code)
+            currency_rates.append(currency_rate)
+        except:
+            logger.error(f"Error getting currency rate: {currency_code}")
+
+    result = {
+        "greeting": greeting_str,
+        "cards": cards_data,
+        "top_transaction": top_transactions,
+        "stock_prices": stocks_data,
+        "currency_rates": currency_rates
+    }
+    result_json = json.dumps(result, ensure_ascii=False, indent=4)
+    logger.debug(f"Response for main page calculated: {result_json=}")
+
+    return result_json
+
+
+def get_greetings(dt: datetime) -> str:
+    logger.debug(f"Calculating user greeting for hour: {dt.hour}")
+    if dt.hour < 12:
+        return "Доброе утро"
+    elif dt.hour < 18:
+        return "Добрый день"
+    elif dt.hour < 21:
+        return "Добрый вечер"
+    else:
+        return "Доброй ночи"
+
+
+if __name__ == "__main__":
+    # dt = datetime.now()
+    # result = get_greetings(dt)
+    # print(result)
+
+    data_excel = read_excel("operations_test.xlsx")
+    res = get_main_page(data_excel, "2025-08-31 18:00:00")
+    # print(res)

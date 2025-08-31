@@ -14,7 +14,7 @@ logger.add(sink=log_file, level="DEBUG")
 
 
 def analyze_cashback(data: list[dict], year: int, month: int) -> str:
-    """Функция возвращает JSON с суммами по категориям кэшбэка в указанном месяце года"""
+    """Возвращает JSON с суммами по категориям кэшбэка в указанном месяце года"""
     logger.debug(f"start analyzing cashback data for {year}/{month}. Input data len: {len(data)}")
     df = pd.DataFrame(data)
     df["Дата операции"] = pd.to_datetime(df["Дата операции"], format="%d.%m.%Y %H:%M:%S")
@@ -27,7 +27,7 @@ def analyze_cashback(data: list[dict], year: int, month: int) -> str:
 
 
 def search_transactions(data: list[dict], search: str, scope: tuple = ("Описание", "Категория")) -> str:
-    """Функция возвращает JSON со всеми транзакциями, найденными по паттерну в полях описание или категория"""
+    """Возвращает JSON со всеми транзакциями, найденными по паттерну в полях описание или категория"""
     logger.debug(f"Start searching transactions for with pattern: '{search}'. Input data len: {len(data)}")
     pattern = re.compile(search)
     result = []
@@ -48,10 +48,10 @@ def search_transactions(data: list[dict], search: str, scope: tuple = ("Опис
 
 
 def search_transactions_p2p(data: list[dict]) -> str:
-    """Функция возвращает JSON со всеми транзакциями, которые относятся к переводам физ.лицам"""
+    """Возвращает JSON со всеми транзакциями, которые относятся к переводам физ.лицам"""
     return search_transactions(data, r"[А-Я]{1}[а-я]+\s[А-Я]{1}\.", scope=("Описание",))
 
 
 def search_transactions_by_phone(data: list[dict]) -> str:
-    """Функция возвращает JSON со всеми транзакциями, содержащими в описании мобильные номера"""
+    """Возвращает JSON со всеми транзакциями, содержащими в описании мобильные номера"""
     return search_transactions(data, r"\+7\s\d{3}\s\d{2,3}-\d{2}-\d{2}", scope=("Описание",))

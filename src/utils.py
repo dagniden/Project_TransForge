@@ -2,7 +2,7 @@ import json
 import os
 
 import pandas as pd
-import requests
+
 from loguru import logger
 
 # Конфигурация логгера
@@ -26,20 +26,48 @@ def read_json(filename: str) -> dict | list[dict]:
     return data
 
 
-def get_stock_prices(stock_names: list) -> list:
-    stock_name_str = ",".join(stock_names)
-    api_key = "869901c4c2db759fdfe5c7f7fc0b4a9f"
-    url = f"http://api.marketstack.com/v2/eod?access_key={api_key}&symbols={stock_name_str}"
-    logger.debug(f"Sending GET request: {url=}")
+def get_card_statistics(data: list[dict]) -> list:
+    """Вычисляет статистику трат и кэшбэка по картам из списка транзакций."""
+    logger.debug(f"Start calculating statistics for operation's amount: {len(data)}")
+    df = pd.DataFrame(data)
+    df_filtered = df[df["Сумма платежа"] < 0]
 
-    response = requests.get(url)
-    if response.status_code != 200:
-        logger.error(f"Error getting stock prices: {response.status_code} {response.reason}")
-        return []
+    df_grouped = (
+        df_filtered
+        .groupby("Номер карты")
+        .agg({
+            "Сумма операции": "sum",
+            "Кэшбэк": "sum"
+        })
+        .reset_index()
+        .to_dict("records")
+    )
 
-    json_data = response.json().get("data", [])
-    logger.debug(f"JSON data len: {url=}")
-    return json_data
+    result = []
+    for item in df_grouped:
+        result.append({"last_digits": item["Номер карты"].replace("*", ""),
+                       "total_spent": abs(item["Сумма операции"]),
+                       "cashback": item["Кэшбэк"]})
+
+    logger.debug(f"Card statistics result len: {len(result)}\n"
+                 f"Result: {result}")
+    return result
+
+
+def filter_top_transactions(data: list[dict]) -> list:
+    logger.debug(f"Start filtering top transactions for operation's amount: {len(data)}")
+    sorted_data = sorted(data, key=lambda x: abs(x.get("Сумма платежа")), reverse=True)
+    top_transactions = sorted_data[:5]
+    result = []
+    for item in top_transactions:
+        result.append({"date": item.get("Дата операции", ""),
+                       "amount": item.get("Сумма платежа", ""),
+                       "category": item.get("Категория", ""),
+                       "description": item.get("Описание", "")
+
+        })
+    logger.debug(f"Top transactions result len: {len(result)}\n")
+    return result
 
 
 def filter_last_stocks(data: list[dict], stock_names: list) -> list:
@@ -53,3 +81,8 @@ def filter_last_stocks(data: list[dict], stock_names: list) -> list:
             found_stocks.append(item["symbol"])
     logger.debug(f"End filtering last stocks: output data len={len(found_stocks)}")
     return result
+
+
+if __name__ == "__main__":
+    excel_dict = read_excel("operations_test.xlsx")
+    get_card_statistics(excel_dict)
