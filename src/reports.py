@@ -7,8 +7,8 @@ import pandas as pd
 from dateutil.relativedelta import relativedelta
 from loguru import logger
 
-from src.utils import read_excel
 from src.services import search_transactions
+from src.utils import read_excel
 
 # Конфигурация логгера
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -46,8 +46,9 @@ def spending_by_category(transactions: pd.DataFrame, category: str, date: Option
 
     # Фильтруем за последние 3 месяца
     three_months_ago = dt - relativedelta(months=3)
-    df_filtered = transactions[(transactions["Дата операции"] >= three_months_ago) &
-                               (transactions["Дата операции"] <= dt)].copy()
+    df_filtered = transactions[
+        (transactions["Дата операции"] >= three_months_ago) & (transactions["Дата операции"] <= dt)
+    ].copy()
     df_filtered["Дата операции"] = df_filtered["Дата операции"].dt.strftime("%Y-%m-%d %H:%M:%S")
 
     # Преобразуем в список словарей и в JSON
@@ -61,20 +62,10 @@ def spending_by_category(transactions: pd.DataFrame, category: str, date: Option
 
 def write_report(filename: str, df: pd.DataFrame):
     with pd.ExcelWriter(filename) as writer:
-        df.to_excel(writer, sheet_name='Sheet1')
-
-
-@save_report()
-def my_func(number):
-    print(number)
-    data_excel = read_excel(os.path.join(current_dir, "..", "data", "operations.xlsx"))
-    df = pd.DataFrame(data_excel)
-    return df
+        df.to_excel(writer, sheet_name="Sheet1")
 
 
 if __name__ == "__main__":
-    # res = my_func()
     data_excel = read_excel(os.path.join(current_dir, "..", "data", "operations.xlsx"))
     df = pd.DataFrame(data_excel)
     df_new = spending_by_category(df, category="Переводы", date="2021-12-19")
-    print(df_new)
