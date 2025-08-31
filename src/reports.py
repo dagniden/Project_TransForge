@@ -20,9 +20,9 @@ logger.add(sink=log_file, level="DEBUG")
 
 def save_report(filename: str = ""):
     def my_decorator(func):
-        def wrapper(*args):
+        def wrapper(*args, **kwargs):
             nonlocal filename
-            result = func(args)
+            result = func(*args, **kwargs)
             logger.debug(f"Start saving report with decorator into: {filename}")
             if filename == "":
                 name = f"{func.__name__}_{datetime.now().strftime("%Y_%m_%d_%H%M")}_report.xlsx"
@@ -30,13 +30,15 @@ def save_report(filename: str = ""):
 
             write_report(filename, result)
             return result
+
         return wrapper
+
     return my_decorator
 
 
+@save_report()
 def spending_by_category(transactions: pd.DataFrame, category: str, date: Optional[str] = None) -> pd.DataFrame:
     """Возвращает DataFrame транзакций за последние 3 месяца по заданной категории"""
-    # Преобразуем строку даты в datetime
     dt = datetime.strptime(date, "%Y-%m-%d")
 
     # Преобразуем столбец с датой в datetime
@@ -44,23 +46,17 @@ def spending_by_category(transactions: pd.DataFrame, category: str, date: Option
 
     # Фильтруем за последние 3 месяца
     three_months_ago = dt - relativedelta(months=3)
-    df_filtered = transactions[(transactions["Дата операции"] >= three_months_ago) & (transactions["Дата операции"] <= dt)]
-
-    # Преобразуем Timestamp в строку, чтобы json.dumps работал
+    df_filtered = transactions[(transactions["Дата операции"] >= three_months_ago) &
+                               (transactions["Дата операции"] <= dt)].copy()
     df_filtered["Дата операции"] = df_filtered["Дата операции"].dt.strftime("%Y-%m-%d %H:%M:%S")
 
     # Преобразуем в список словарей и в JSON
     result = df_filtered.to_dict("records")
-    result_json = json.dumps(result, indent=4, ensure_ascii=False)
-    # print(result_json)
 
-    # # Фильтруем по категории
-    data_json = search_transactions(result_json, search=category, scope=("Категория",))
-    print(data_json)
-    # data_dict = json.loads(data_json)
-    # df_new = pd.DataFrame(data_dict)
-    #
-    # return df_new
+    # Фильтруем по категории
+    data_json = search_transactions(result, search=category, scope=("Категория",))
+    data_dict = json.loads(data_json)
+    return pd.DataFrame(data_dict)
 
 
 def write_report(filename: str, df: pd.DataFrame):
