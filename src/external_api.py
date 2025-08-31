@@ -1,8 +1,8 @@
 import os
 
 import requests
-from loguru import logger
 from dotenv import load_dotenv
+from loguru import logger
 
 load_dotenv()
 
@@ -16,13 +16,13 @@ logger.add(sink=log_file, level="DEBUG")
 
 def get_currency_rate(currency_code: str):
     """Возвращает текущий курс указанной валюты по коду ISO с сайта ЦБ РФ."""
-    url = f"https://www.cbr-xml-daily.ru//daily_json.js"
+    url = "https://www.cbr-xml-daily.ru//daily_json.js"
 
     logger.debug(f"Sending GET request: {url=}")
     response = requests.get(url)
 
     if response.status_code != 200:
-        raise ValueError(f"Failed to get currency rate")
+        raise ValueError("Failed to get currency rate")
 
     data = response.json()
     currency_data = data["Valute"].get(currency_code)

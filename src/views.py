@@ -1,11 +1,11 @@
 import json
 import os
+from datetime import datetime
 
 from loguru import logger
-from datetime import datetime
-from src.utils import get_card_statistics, read_excel, read_json, filter_top_transactions, filter_last_stocks
-from src.external_api import get_stock_prices, get_currency_rate
-from src.services import search_transactions_p2p
+
+from src.external_api import get_currency_rate, get_stock_prices
+from src.utils import filter_last_stocks, filter_top_transactions, get_card_statistics, read_json
 
 # Конфигурация логгера
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -16,6 +16,7 @@ logger.add(sink=log_file, level="DEBUG")
 
 
 def get_main_page(data: list[dict], datetime_str: str) -> str:
+    """Возвращает json для главной страницы"""
     dt = datetime.strptime(datetime_str, "%Y-%m-%d %H:%M:%S")
     settings = read_json(os.path.join(current_dir, "..", "user_settings.json"))
     user_stocks = settings["user_stocks"]
@@ -30,7 +31,7 @@ def get_main_page(data: list[dict], datetime_str: str) -> str:
     try:
         stocks_data = filter_last_stocks(get_stock_prices(user_stocks), user_stocks)
     except:
-        logger.error(f"Error getting stocks data")
+        logger.error("Error getting stocks data")
 
     currency_rates = []
     for currency_code in user_currencies:
@@ -45,7 +46,7 @@ def get_main_page(data: list[dict], datetime_str: str) -> str:
         "cards": cards_data,
         "top_transaction": top_transactions,
         "stock_prices": stocks_data,
-        "currency_rates": currency_rates
+        "currency_rates": currency_rates,
     }
     result_json = json.dumps(result, ensure_ascii=False, indent=4)
     logger.debug(f"Response for main page calculated: {result=}")
@@ -54,6 +55,7 @@ def get_main_page(data: list[dict], datetime_str: str) -> str:
 
 
 def get_greetings(dt: datetime) -> str:
+    """Возвращает приветствие пользователя"""
     logger.debug(f"Calculating user greeting for hour: {dt.hour}")
     if dt.hour < 12:
         return "Доброе утро"
@@ -63,16 +65,3 @@ def get_greetings(dt: datetime) -> str:
         return "Добрый вечер"
     else:
         return "Доброй ночи"
-
-
-if __name__ == "__main__":
-    # dt = datetime.now()
-    # result = get_greetings(dt)
-    # print(result)
-
-    # data_excel = read_excel("operations_test.xlsx")
-    # res = get_main_page(data_excel, "2025-08-31 18:00:00")
-    # print(res)
-
-    data_excel = read_excel(os.path.join(current_dir, "..", "data", "operations.xlsx"))
-    print(search_transactions_p2p(data_excel))
