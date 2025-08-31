@@ -28,16 +28,18 @@ def read_json(filename: str) -> dict | list[dict]:
 
 def get_stock_prices(stock_names: list) -> list:
     stock_name_str = ",".join(stock_names)
-    logger.debug(f"{stock_name_str=}")
     api_key = "869901c4c2db759fdfe5c7f7fc0b4a9f"
     url = f"http://api.marketstack.com/v2/eod?access_key={api_key}&symbols={stock_name_str}"
+    logger.debug(f"Sending GET request: {url=}")
 
     response = requests.get(url)
     if response.status_code != 200:
         logger.error(f"Error getting stock prices: {response.status_code} {response.reason}")
         return []
 
-    return response.json().get("data", [])
+    json_data = response.json().get("data", [])
+    logger.debug(f"JSON data len: {url=}")
+    return json_data
 
 
 def filter_last_stocks(data: list[dict], stock_names: list) -> list:
