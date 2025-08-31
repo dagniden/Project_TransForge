@@ -3,8 +3,9 @@ import os
 
 from loguru import logger
 from datetime import datetime
-from src.utils import get_card_statistics, read_excel, read_json, filter_top_transactions
+from src.utils import get_card_statistics, read_excel, read_json, filter_top_transactions, filter_last_stocks
 from src.external_api import get_stock_prices, get_currency_rate
+from src.services import search_transactions_p2p
 
 # Конфигурация логгера
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -27,10 +28,9 @@ def get_main_page(data: list[dict], datetime_str: str) -> str:
 
     stocks_data = []
     try:
-        stocks_data = get_stock_prices(user_stocks)
+        stocks_data = filter_last_stocks(get_stock_prices(user_stocks), user_stocks)
     except:
         logger.error(f"Error getting stocks data")
-
 
     currency_rates = []
     for currency_code in user_currencies:
@@ -48,7 +48,7 @@ def get_main_page(data: list[dict], datetime_str: str) -> str:
         "currency_rates": currency_rates
     }
     result_json = json.dumps(result, ensure_ascii=False, indent=4)
-    logger.debug(f"Response for main page calculated: {result_json=}")
+    logger.debug(f"Response for main page calculated: {result=}")
 
     return result_json
 
@@ -70,6 +70,9 @@ if __name__ == "__main__":
     # result = get_greetings(dt)
     # print(result)
 
-    data_excel = read_excel("operations_test.xlsx")
-    res = get_main_page(data_excel, "2025-08-31 18:00:00")
+    # data_excel = read_excel("operations_test.xlsx")
+    # res = get_main_page(data_excel, "2025-08-31 18:00:00")
     # print(res)
+
+    data_excel = read_excel(os.path.join(current_dir, "..", "data", "operations.xlsx"))
+    print(search_transactions_p2p(data_excel))

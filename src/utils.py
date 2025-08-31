@@ -14,9 +14,18 @@ logger.add(sink=log_file, level="DEBUG")
 
 
 def read_excel(filename: str) -> list[dict]:
-    """Функция возвращает DataFrame с содержимым эксель файла"""
+    """Функция возвращает список словарей с содержимым Excel файла"""
     data = pd.read_excel(filename)
+
+    # для числовых колонок — 0, для строковых — ""
+    for col in data.columns:
+        if pd.api.types.is_numeric_dtype(data[col]):
+            data[col] = data[col].fillna(0)
+        else:
+            data[col] = data[col].fillna("")
+
     return data.to_dict("records")
+
 
 
 def read_json(filename: str) -> dict | list[dict]:
@@ -45,9 +54,9 @@ def get_card_statistics(data: list[dict]) -> list:
 
     result = []
     for item in df_grouped:
-        result.append({"last_digits": item["Номер карты"].replace("*", ""),
-                       "total_spent": abs(item["Сумма операции"]),
-                       "cashback": item["Кэшбэк"]})
+        result.append({"last_digits": item.get("Номер карты", "").replace("*", ""),
+                       "total_spent": abs(item.get("Сумма операции", 0)),
+                       "cashback": item.get("Кэшбэк", "")})
 
     logger.debug(f"Card statistics result len: {len(result)}\n"
                  f"Result: {result}")
@@ -85,4 +94,5 @@ def filter_last_stocks(data: list[dict], stock_names: list) -> list:
 
 if __name__ == "__main__":
     excel_dict = read_excel("operations_test.xlsx")
-    get_card_statistics(excel_dict)
+
+    print(filter_top_transactions(excel_dict))

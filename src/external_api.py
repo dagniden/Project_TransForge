@@ -2,6 +2,9 @@ import os
 
 import requests
 from loguru import logger
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # Конфигурация логгера
 current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -38,9 +41,9 @@ def get_currency_rate(currency_code: str):
 
 
 def get_stock_prices(stock_names: list) -> list:
+    api_key = os.getenv("MARKETSTACK_API_KEY")
     """Получает котировки акций (цены закрытия) для списка тикеров через API Marketstack."""
     stock_name_str = ",".join(stock_names)
-    api_key = "869901c4c2db759fdfe5c7f7fc0b4a9f_delete"
     url = f"http://api.marketstack.com/v2/eod?access_key={api_key}&symbols={stock_name_str}"
 
     logger.debug(f"Sending GET request: {url=}")

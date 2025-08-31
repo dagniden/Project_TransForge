@@ -49,7 +49,8 @@ def search_transactions(data: list[dict], search: str, scope: tuple = ("Опис
 
 def search_transactions_p2p(data: list[dict]) -> str:
     """Возвращает JSON со всеми транзакциями, которые относятся к переводам физ.лицам"""
-    return search_transactions(data, r"[А-Я]{1}[а-я]+\s[А-Я]{1}\.", scope=("Описание",))
+    filtered_by_category = search_transactions(data, r"Переводы", scope=("Категория",))
+    return search_transactions(json.loads(filtered_by_category), r"[А-Я]{1}[а-я]+\s[А-Я]{1}\.", scope=("Описание", ""))
 
 
 def search_transactions_by_phone(data: list[dict]) -> str:
