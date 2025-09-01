@@ -27,7 +27,7 @@ def read_excel(filename: str) -> list[dict]:
 
 
 def read_json(filename: str) -> dict | list[dict]:
-    """Функция возвращает словарь с конфигурацией приложения"""
+    """Функция используется для получения словаря с конфигурацией приложения, а также для чтения других json файлов"""
     with open(filename, "r", encoding="utf-8") as f:
         data = json.load(f)
     return data

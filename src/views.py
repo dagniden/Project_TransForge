@@ -30,16 +30,16 @@ def get_main_page(data: list[dict], datetime_str: str) -> str:
     stocks_data = []
     try:
         stocks_data = filter_last_stocks(get_stock_prices(user_stocks), user_stocks)
-    except:
-        logger.error("Error getting stocks data")
+    except Exception as e:
+        logger.error(f"Error getting stocks data: {e}")
 
     currency_rates = []
     for currency_code in user_currencies:
         try:
             currency_rate = get_currency_rate(currency_code)
             currency_rates.append(currency_rate)
-        except:
-            logger.error(f"Error getting currency rate: {currency_code}")
+        except Exception as e:
+            logger.error(f"Error getting currency rate {currency_code}: {e}")
 
     result = {
         "greeting": greeting_str,

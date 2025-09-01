@@ -28,10 +28,9 @@ def test_analyze_cashback_no_data_for_month():
     assert result == {}
 
 
-def test_analyze_cashback_invalid_date_format():
-    data = [{"Дата операции": "invalid_date", "Категория": "Еда", "Бонусы (включая кэшбэк)": 50}]
+def test_analyze_cashback_invalid_date_format(transactions):
     with pytest.raises(Exception):
-        analyze_cashback(data, 2025, 8)
+        analyze_cashback(transactions, 2025, 8)
 
 
 # ----------------------
@@ -39,21 +38,15 @@ def test_analyze_cashback_invalid_date_format():
 # ----------------------
 
 
-def test_search_transactions_success():
-    data = [
-        {"Описание": "Оплата кафе", "Категория": "Еда"},
-        {"Описание": "Такси", "Категория": "Транспорт"},
-        {"Описание": "Покупка книги", "Категория": "Развлечения"},
-    ]
-    result_json = search_transactions(data, "кафе")
+def test_search_transactions_success(transactions):
+    result_json = search_transactions(transactions, "кафе")
     result = json.loads(result_json)
     assert len(result) == 1
     assert result[0]["Описание"] == "Оплата кафе"
 
 
-def test_search_transactions_no_matches():
-    data = [{"Описание": "Оплата кафе", "Категория": "Еда"}]
-    result_json = search_transactions(data, "магазин")
+def test_search_transactions_no_matches(transactions):
+    result_json = search_transactions(transactions, "магазин")
     result = json.loads(result_json)
     assert result == []
 
