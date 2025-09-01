@@ -2,6 +2,7 @@ import json
 import os
 from datetime import datetime
 
+import pandas as pd
 from loguru import logger
 
 from src.external_api import get_currency_rate, get_stock_prices
@@ -23,9 +24,11 @@ def get_main_page(data: list[dict], datetime_str: str) -> str:
     user_currencies = settings["user_currencies"]
     logger.debug(f"Start calculating response for main page with args: {user_stocks=}, {user_currencies=}, {dt=}")
 
+    filtered_data = filter_data_by_month(data, dt)
+
     greeting_str = get_greetings(dt)
-    cards_data = get_card_statistics(data)
-    top_transactions = filter_top_transactions(data)
+    cards_data = get_card_statistics(filtered_data)
+    top_transactions = filter_top_transactions(filtered_data)
 
     stocks_data = []
     try:
@@ -48,10 +51,31 @@ def get_main_page(data: list[dict], datetime_str: str) -> str:
         "stock_prices": stocks_data,
         "currency_rates": currency_rates,
     }
-    result_json = json.dumps(result, ensure_ascii=False, indent=4)
-    logger.debug(f"Response for main page calculated: {result=}")
 
+    logger.debug(f"Response for main page calculated: {result=}")
+    result_json = json.dumps(result, ensure_ascii=False, indent=4, default=json_serializer)
     return result_json
+
+
+def filter_data_by_month(data: list[dict], dt: datetime) -> list[dict]:
+    """
+    Оставляет записи только в диапазоне с начала месяца до указанной даты включительно.
+    Предполагается, что в данных есть ключ 'Дата операции' в формате '%d.%m.%Y %H:%M:%S'.
+    """
+    df = pd.DataFrame(data)
+    df["Дата операции"] = pd.to_datetime(df["Дата операции"], format="%d.%m.%Y %H:%M:%S")
+
+    start_of_month = dt.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    mask = (df["Дата операции"] >= start_of_month) & (df["Дата операции"] <= dt)
+
+    return df.loc[mask].to_dict("records")
+
+
+def json_serializer(obj):
+    """Конвертер для datetime и pandas.Timestamp в строку"""
+    if isinstance(obj, (datetime, pd.Timestamp)):
+        return obj.strftime("%Y-%m-%d %H:%M:%S")
+    raise TypeError(f"Type {type(obj)} not serializable")
 
 
 def get_greetings(dt: datetime) -> str:
